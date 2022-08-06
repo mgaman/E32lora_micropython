@@ -18,7 +18,7 @@ Set the mode to Normal, Wakeup, PowerSave or Sleep.
 Get a local copy of this devices configuration data. Not needed if you do not intend to make changes
 ## printConfig()
 Print out a readable report of the local copy of configuration data
-## setConfig(action)
+## setConfig(true-false)
 Write the local copy of the configuration back to the device. If *action* is *True* the data is retained upon powerdown, else *False* will not retain the data.  
 The following functions all modify the local copy of configuration. To understand the values to write, read the datasheet, section 7.5.  
 
@@ -43,4 +43,7 @@ Contains a collection of functions to implement various transmit/receive scenari
 ## main.py
 Uses pin 12 to set the device into transmit or receive mode. If Pin 12 is left open the transmit function is executed. If shorted to
 ground the receive function is executed.
-
+# Anomalies
+According to the datasheet when broadcasting to may use an address of 0x0000 or 0xFFFF. In practice I only got 0xFFFF to work.
+# Outstanding Issues
+One should be able be able to monitor the AUX pin transitioning from LOW to HIGH to judge when an action has completed. I have yet to get this to work in practice so have used timed delays instead. Unprofessional but it works.  
