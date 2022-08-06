@@ -1,0 +1,22 @@
+{
+  "upload": {
+    "port": "/dev/ttyACM1",
+    "baud": 115200
+  },
+  "serial": {
+    "port": "/dev/ttyACM1",
+    "baud": 115200
+  },
+  "ignore": {
+    "extensions": [
+      ".micropythonrc"
+    ],
+    "directories": [
+      ".vscode"
+    ]
+  },
+  "tools": {
+    "ampy": "/home/henryd/.local/bin/ampy",
+    "rshell": "/home/henryd/.local/bin/rshell"
+  }
+}

@@ -1,0 +1,8 @@
+from machine import UART
+import E32lora
+ser = UART(1,9600)
+ll = E32lora.E32lora(ser,15,14,13)
+ll.setDebug(True)
+ll.getConfig()
+ll.printConfig()
+
