@@ -29,11 +29,15 @@ The following functions all modify the local copy of configuration. To understan
 ## setWakeup(n)
 ## setPower(n)
 
-The following finctions take a True/False argument to turn flags on or off.
+The following functions take a True/False argument to turn flags on or off.
 ## setFixedTransparent(true-false)
 ## setPullup(true-false)
 ## setFEC(true-false)
 
+## sendMessage(msg)
+msg must be a *bytes* or *str* object. The maximum length of msg is 58 bytes, according to the manual.
+## getData()
+Returns *None* if no data available, else a *bytearray*.
 # Testing
 I aimed to keep my workspace simple so adopted the following strategy.  
 ## E32lora.py
