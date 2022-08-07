@@ -2,6 +2,35 @@ from machine import UART
 from E32lora import E32lora
 import time
 
+
+'''
+        E32 device         Pico      
+         +----+          +---------+
+     GND |    |--+ +-----| 15    16|
+  +--VCC |    |  | | +---| 14    17|  
+  |      |    |  +-|-|---| GND  GND|           
+  |  AUX |    |----+ | +-| 13    18|
+  |  TX  |    |----+ | | | 12    19|
+  |  RX  |    |--+ | | | | 11    20|
+  |  M1  |    |--|-|-+ | | 10    21|
+  |      |    |  | |   | | GND  GND|  
+  |  M0  |    |--|-|---+ | 9     22|
+  |      +----+  | |     | 8       |
+  |              | |     | 7     26|
+  |              | |     | 6     27|
+  |              | |     | GND  GND|  
+  |              | +-----| 5     28|
+  |              +-------| 4       |
+  |                      | 3    VCC|---+
+  |                      | 2       |   |
+  |                      | GND  GND|   |
+  |                      | 1       |   |
+  |                      | 0       |   |
+  |                      +---------+   |
+  |                                    |
+  +------------------------------------+
+
+    '''
 def BroadcastTransparent():
     print('Broadcast Transparent')
     ser = UART(1,9600)
