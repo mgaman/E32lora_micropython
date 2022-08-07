@@ -92,3 +92,5 @@ Initial working version
 ## 0.2
 Replaced sendMessage by sendTransparentMessage and sendFixedMessage. Not 100% necessary but makes life simpler for the user.  
 Changed the argument of setAddr() from a tuple to 2 integers. This was done to make a consistent interface to sendFixedMessage.  
+## 0.3
+Tweaked the use of AUX for signalling end of operation

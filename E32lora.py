@@ -83,7 +83,8 @@ class E32lora:
 
     def getVersion(self):
             #return '0.1'   # initial working version, time.sleep instead of AUX
-            return '0.2'   # replace sendMessage by sendTransparentMessage and sendFixedMessage
+            #return '0.2'   # replace sendMessage by sendTransparentMessage and sendFixedMessage
+            return '0.3'    # tweak the use of AUX  
 
     def setDebug(self,flag):
         """
@@ -125,9 +126,17 @@ class E32lora:
 
     def reset(self):
         self.setMode(3)
-        self.serial.write( b'\xc4\xc4\xc4')
+        before = self.aux.value()
+        self.serial.write( b'\XC4\XC4\XC4')
+        start = time.ticks_ms()
+        time.sleep_ms(5)
+        after = self.aux.value()
         while self.aux.value() == 0:
             pass
+        elapsed = time.ticks_ms() - start
+        if self.debug:
+            print('AUX b %d a %d'%(before,after))
+            print('Reset %dms'%(elapsed))
 
     def serClear(self):
         while self.serial.any():
@@ -180,15 +189,18 @@ class E32lora:
         self.haveconfig = False
         self.setMode(3)
         self.serClear()
+        before = self.aux.value()
         self.serial.write( b'\xc1\xc1\xc1')
         start = time.ticks_ms()
-        time.sleep_ms(10)  # why do I need this?
-        d = self.serial.read()
+        time.sleep_ms(5)  # why do I need this?
+        after = self.aux.value()
         # wait for AUX to go down
         while self.aux.value() == 0:
             pass
+        elapsed = time.ticks_ms() - start
+        d = self.serial.read()
         if self.debug:
-            elapsed = time.ticks_ms() - start
+            print('AUX b %d a %d'%(before,after))
             print('getConfig',d,type(d),' Elapsed time',elapsed)
         if type(d) is bytes and len(d) == 6 and d[0] == 0xc0:
             # d is a bytes which is non-mutable, change to bytearray
@@ -391,13 +403,16 @@ class E32lora:
                 self.config[0] = 0xc0
             else:
                 self.config[0] = 0xc2
-            self.serial.write(self.config,6)
+            before = self.aux.value()
             start = time.ticks_ms()
+            self.serial.write(self.config,6)
+            time.sleep_ms(2)
+            after = self.aux.value()
             while self.aux.value() == 0:
                 pass
             if self.debug:
-                elapsed = time.ticks_ms() - start
-                print('setConfig %dms'%elapsed)
+                print('AUX b %d a %d'%(before,after))
+                print('setConfig %dms'%(time.ticks_ms() - start))
             time.sleep(1)
         else:
             print('No config to save')
