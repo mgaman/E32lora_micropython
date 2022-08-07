@@ -4,31 +4,31 @@ The only device I have is an E32-900T20D. I assume the code will work for all de
 I am assuming all pins are connected.  
 Please try this out on as many boards/devices as you can and feed the results back to me.
 ```
-        E32 device         Pico      
-         +----+          +---------+
-     GND |    |--+ +-----| 15    16|
-  +--VCC |    |  | | +---| 14    17|  
-  |      |    |  +-|-|---| GND  GND|           
-  |  AUX |    |----+ | +-| 13    18|
-  |  TX  |    |----+ | | | 12    19|
-  |  RX  |    |--+ | | | | 11    20|
-  |  M1  |    |--|-|-+ | | 10    21|
-  |      |    |  | |   | | GND  GND|  
-  |  M0  |    |--|-|---+ | 9     22|
-  |      +----+  | |     | 8       |
-  |              | |     | 7     26|
-  |              | |     | 6     27|
-  |              | |     | GND  GND|  
-  |              | +-----| 5     28|
-  |              +-------| 4       |
-  |                      | 3    VCC|---+
-  |                      | 2       |   |
-  |                      | GND  GND|   |
-  |                      | 1       |   |
-  |                      | 0       |   |
-  |                      +---------+   |
-  |                                    |
-  +------------------------------------+
+        E32 device             Pico      
+         +----+              +---------+
+     GND |    |--+ +---------| 15    16|
+  +--VCC |    |  | | +-------| 14    17|  
+  |      |    |  +-|-|-------| GND  GND|           
+  |  AUX |    |----+ | +-----| 13    18|
+  |  TX  |    |----+ | |  +--| 12    19|  Pin 12 open for transmit function
+  |  RX  |    |--+ | | |  |  | 11    20|  to GND for receive function
+  |  M1  |    |--|-|-+ |  |  | 10    21|
+  |      |    |  | |   |  +--| GND  GND|  
+  |  M0  |    |--|-|---+     | 9     22|
+  |      +----+  | |         | 8       |
+  |              | |         | 7     26|
+  |              | |         | 6     27|
+  |              | |         | GND  GND|  
+  |              | +---------| 5     28|
+  |              +-----------| 4       |
+  |                          | 3    VCC|---+
+  |                          | 2       |   |
+  |                          | GND  GND|   |
+  |                          | 1       |   |
+  |                          | 0       |   |
+  |                          +---------+   |
+  |                                        |
+  +----------------------------------------+
 ```
 # API
 ## Constructor
