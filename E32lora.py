@@ -82,7 +82,8 @@ class E32lora:
         self.debug = False
 
     def getVersion(self):
-            return '0.1'   # initial working version, time.sleep instead of AUX
+            #return '0.1'   # initial working version, time.sleep instead of AUX
+            return '0.2'   # replace sendMessage by sendTransparentMessage and sendFixedMessage
 
     def setDebug(self,flag):
         """
@@ -231,7 +232,7 @@ class E32lora:
         power = self.config[5] & 0x3
         print(self.powertypes[power])
 
-    def sendMessage(self,msg):
+    def sendTransparentMessage(self,msg):
         """
         Send a message from this device
         @parameter msg Must be an str or a bytes object, no greater than 58 bytes
@@ -252,6 +253,29 @@ class E32lora:
         else:
             print('Message must bytes or str')
 
+    def sendFixedMessage(self,addh,addl,channel,msg):
+        """
+        Send a message from this device
+        @parameter msg Must be an str or a bytes object, no greater than 58 bytes
+        """
+        if type(msg) is bytes or type(msg) is str:
+            if len(msg) < 59:
+                self.setMode(0)
+                if self.debug:
+                    print('Sending to %d:%d channel %d'%(addh,addl,channel),msg)
+                ba = ''
+                if type(msg) is str:
+                    ba = bytes(bytearray((addh,addl,channel))+bytearray(msg))
+                else:
+                    ba = bytes(bytearray((addh,addl,channel)))+msg
+                self.serial.write(ba,len(ba))
+                while (self.aux.value() == 0):
+                    pass
+            else:
+                print('Maximum message length 58 bytes')
+        else:
+            print('Message must bytes or str')
+
     def getlocalconfig(self):
         while not self.haveconfig:
             savedebug = self.debug
@@ -259,17 +283,15 @@ class E32lora:
             self.getConfig()
             self.debug = savedebug        
 
-    def setAddress(self,addr):
+    def setAddress(self,addh,addl):
         """
         Set the ADDH and ADDL fields in the local copy of configuration
-        @parameter addr A tuple of 2 digits, ADDH and ADDL
+        @parameter addh int
+        @parameter addl int
         """
-        if type(addr) is not tuple and len(addr) != 2:
-            print('Address must be integer tuple length 2')
-            return
         self.getlocalconfig()
-        self.config[1] = addr[0]
-        self.config[2] = addr[1]
+        self.config[1] = addh
+        self.config[2] = addl
 
     def setParity(self,par):
         """

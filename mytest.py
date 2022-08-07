@@ -2,35 +2,34 @@ from machine import UART
 from E32lora import E32lora
 import time
 
+'''
+        E32 device             Pico      
+         +----+              +---------+
+     GND |    |--+ +---------| 15    16|
+  +--VCC |    |  | | +-------| 14    17|  
+  |      |    |  +-|-|-------| GND  GND|           
+  |  AUX |    |----+ | +-----| 13    18|
+  |  TX  |    |----+ | |  +--| 12    19|  Pin 12 open for transmit function
+  |  RX  |    |--+ | | |  |  | 11    20|  to GND for receive function
+  |  M1  |    |--|-|-+ |  |  | 10    21|
+  |      |    |  | |   |  +--| GND  GND|  
+  |  M0  |    |--|-|---+     | 9     22|
+  |      +----+  | |         | 8       |
+  |              | |         | 7     26|
+  |              | |         | 6     27|
+  |              | |         | GND  GND|  
+  |              | +---------| 5     28|
+  |              +-----------| 4       |
+  |                          | 3    VCC|---+
+  |                          | 2       |   |
+  |                          | GND  GND|   |
+  |                          | 1       |   |
+  |                          | 0       |   |
+  |                          +---------+   |
+  |                                        |
+  +----------------------------------------+
 
 '''
-        E32 device         Pico      
-         +----+          +---------+
-     GND |    |--+ +-----| 15    16|
-  +--VCC |    |  | | +---| 14    17|  
-  |      |    |  +-|-|---| GND  GND|           
-  |  AUX |    |----+ | +-| 13    18|
-  |  TX  |    |----+ | | | 12    19|
-  |  RX  |    |--+ | | | | 11    20|
-  |  M1  |    |--|-|-+ | | 10    21|
-  |      |    |  | |   | | GND  GND|  
-  |  M0  |    |--|-|---+ | 9     22|
-  |      +----+  | |     | 8       |
-  |              | |     | 7     26|
-  |              | |     | 6     27|
-  |              | |     | GND  GND|  
-  |              | +-----| 5     28|
-  |              +-------| 4       |
-  |                      | 3    VCC|---+
-  |                      | 2       |   |
-  |                      | GND  GND|   |
-  |                      | 1       |   |
-  |                      | 0       |   |
-  |                      +---------+   |
-  |                                    |
-  +------------------------------------+
-
-    '''
 def BroadcastTransparent():
     print('Broadcast Transparent')
     ser = UART(1,9600)
@@ -40,8 +39,8 @@ def BroadcastTransparent():
     lora.getConfig()
     hostAddress = (lora.config[1],lora.config[2])
     lora.printConfig()
-#    lora.setAddress((0,0))  # broadcaster must be 0x0000 or 0xFFFF
-    lora.setAddress((0xff,0xff))  # broadcaster must be 0x0000 or 0xFFFF
+    lora.setAddress(0xff,0xff)  # broadcaster must be 0xffff
+    lora.setFixedTransparent(False)
     lora.setConfig(False)
     time.sleep(2)
     lora.getConfig()
@@ -50,9 +49,9 @@ def BroadcastTransparent():
     #lora.reset()
     count = 0
     while True:
-        line = 'Broadcast Trans %d from %d:%d'%(count,hostAddress[0],hostAddress[1])
+        line = 'Broadcast Transparent %d from %d:%d'%(count,hostAddress[0],hostAddress[1])
         #print(line)
-        lora.sendMessage(line)
+        lora.sendTransparentMessage(line)
         count = count + 1
         time.sleep(2)
 
@@ -96,9 +95,7 @@ def BroadcastFixed():
     count = 0
     while True:
         line = 'Broadcast Fixed %d from %d:%d'%(count,hostAddress[0],hostAddress[1])
-        # now make a bytearray from addrh,addrl,channel and line
-        ba = bytearray((0xff,0xff,lora.config[4]))+bytearray(line)
-        lora.sendMessage(bytes(ba))
+        lora.sendFixedMessage(0xff,0xff,lora.config[4],line)
         count = count + 1
         time.sleep(2)
 
@@ -123,13 +120,16 @@ def TargetFixed():
     while True:
         line = 'Target Fixed %d from %d:%d'%(count,hostAddress[0],hostAddress[1])
         # now make a bytearray from addrh,addrl,channel and line
-        ba=''
+        addh=0
+        addl=0
+        ch=lora.config[4]
         if firstTarget:
-            ba = bytearray((0,1,lora.config[4]))+bytearray(line)  # to 1 on same channel
+            addl = 1
         else:
-            ba = bytearray((0,3,1))+bytearray(line)  # to 3 on different channel (1)
+            addl = 3
+            ch = 1
+        lora.sendFixedMessage(addh,addl,ch,line)
         firstTarget = not firstTarget
-        lora.sendMessage(bytes(ba))
         count = count + 1
         time.sleep(2)
 

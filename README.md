@@ -47,8 +47,10 @@ Get a local copy of this devices configuration data. Not needed if you do not in
 Print out a readable report of the local copy of configuration data
 ## setConfig(true-false)
 Write the local copy of the configuration back to the device. If *action* is *True* the data is retained upon powerdown, else *False* will not retain the data.  
+
 The following functions all modify the local copy of configuration. To understand the values to write, read the datasheet, section 7.5.  
 
+## setAddress(addh,addl)
 ## SetParity(n)
 ## setUARTbaudrate(n)
 ## setAirRate(n)
@@ -61,8 +63,14 @@ The following functions take a True/False argument to turn flags on or off.
 ## setPullup(true-false)
 ## setFEC(true-false)
 
-## sendMessage(msg)
-msg must be a *bytes* or *str* object. The maximum length of msg is 58 bytes, according to the manual.
+## sendTransparentMessage(msg)
+msg must be a *bytes* or *str* object. The maximum length of msg is 58 bytes, according to the manual. Use this when in *Transparent* mode
+## sendFixedMessage(addrh,addrl,channel,msg)
+addrh - *int* target address high  
+addrl - *int*  target address low  
+channel - *int*  target channel  
+msg - message payload, a *bytes* or *string* object  
+Use this when in *Fixed* mode.
 ## getData()
 Returns *None* if no data available, else a *bytearray*.
 # Testing
@@ -75,6 +83,12 @@ Contains a collection of functions to implement various transmit/receive scenari
 Uses pin 12 to set the device into transmit or receive mode. If Pin 12 is left open the transmit function is executed. If shorted to
 ground the receive function is executed.
 # Anomalies
-According to the datasheet when broadcasting to may use an address of 0x0000 or 0xFFFF. In practice I only got 0xFFFF to work.
+According to the datasheet when broadcasting one must use an address of 0x0000 or 0xFFFF. In practice I only got 0xFFFF to work.
 # Outstanding Issues
-One should be able be able to monitor the AUX pin transitioning from LOW to HIGH to judge when an action has completed. I have yet to get this to work in practice so have used timed delays instead. Unprofessional but it works.  
+One should be able be able to monitor the AUX pin transitioning from LOW to HIGH to judge when an action has completed. I have yet to get this to work in practice so have used timed delays instead. Unprofessional but it works.
+# Releases
+## 0.1
+Initial working version
+## 0.2
+Replaced sendMessage by sendTransparentMessage and sendFixedMessage. Not 100% necessary but makes life simpler for the user.  
+Changed the argument of setAddr() from a tuple to 2 integers. This was done to make a consistent interface to sendFixedMessage.  
