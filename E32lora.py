@@ -1,7 +1,5 @@
-from machine import Pin,UART
-#from enum import Enum   No enum in micropython
 import time
-    
+import sys    
 class E32lora:
     """
     Written for the E32900T20D device. I assume that all the code is relevant to other
@@ -62,12 +60,32 @@ class E32lora:
         @parameter m0. The GPIO pin number of M0
         @parameter m1. The GPIO pin number of M1
         """
+        self.getPythonType()
+        if self.pythontype == 0:   #micropython
+            from machine import Pin,UART
+        elif self.pythontype == 1: #circuitpython
+            import board
+            import digitalio
+            import busio
+            
         self.serial = serial
-        self.aux = Pin(aux,Pin.IN,Pin.PULL_UP)
-        self.m0 = Pin(m0,Pin.OUT)
-        self.m1 = Pin(m1,Pin.OUT)
-        self.m0.low()
-        self.m1.low()
+        if self.pythontype == 0:
+            self.aux = Pin(aux,Pin.IN,Pin.PULL_UP)
+            self.m0 = Pin(m0,Pin.OUT)
+            self.m1 = Pin(m1,Pin.OUT)
+            self.m0.low()
+            self.m1.low()
+        elif self.pythontype == 1:
+            self.aux = digitalio.DigitalInOut(aux)
+            self.aux.direction = digitalio.Direction.INPUT
+            self.aux.pull = digitalio.Pull.UP
+            self.m0 = digitalio.DigitalInOut(m0)
+            self.m0.direction = digitalio.Direction.OUTPUT
+            self.m0.value = 0
+            self.m1 = digitalio.DigitalInOut(m1)
+            self.m1.direction = digitalio.Direction.OUTPUT
+            self.m1.value = 0
+            
         self.mode = 0
         self.paritytypes = ['Parity 8N1 (default)','Parity 8O1','Parity 8E1','Parity 8N1']
         self.baudtypes = ['UART baudrate 1200bps','UART baudrate 2400bps','UART baudrate 4800bps',
@@ -81,10 +99,22 @@ class E32lora:
         self.haveconfig = False
         self.debug = False
 
+    def getPythonType(self):
+        imptype = sys.implementation[0]
+        #print(imptype)
+        if  imptype == 'micropython':
+            self.pythontype = 0
+        elif imptype == 'circuitpython':
+            self.pythontype = 1
+        else:
+            self.pythontype = -1
+        return self.pythontype
+
     def getVersion(self):
             #return '0.1'   # initial working version, time.sleep instead of AUX
             #return '0.2'   # replace sendMessage by sendTransparentMessage and sendFixedMessage
-            return '0.3'    # tweak the use of AUX  
+            #return '0.3'    # tweak the use of AUX
+            return '0.4'    # added circuitpython support  
 
     def setDebug(self,flag):
         """
@@ -106,41 +136,68 @@ class E32lora:
             print('Invalid mode',mode)
         else:
             #print('setmode',mode)
-            if mode == 0:
-                self.m0.low()
-                self.m1.low()
-            elif mode == 1:
-                self.m0.high()
-                self.m1.low()
-            elif mode == 2:
-                self.m0.low()
-                self.m1.high()
-            elif mode == 3:
-                self.m0.high()
-                self.m1.high()
+            if self.pythontype == 0:
+                if mode == 0:
+                    self.m0.low()
+                    self.m1.low()
+                elif mode == 1:
+                    self.m0.high()
+                    self.m1.low()
+                elif mode == 2:
+                    self.m0.low()
+                    self.m1.high()
+                elif mode == 3:
+                    self.m0.high()
+                    self.m1.high()
+
+            else:
+                if mode == 0:
+                    self.m0.value = 0 
+                    self.m1.value = 0
+                elif mode == 1:
+                    self.m0.value = 1
+                    self.m1.value = 0
+                elif mode == 2:
+                    self.m0.value = 0
+                    self.m1.value = 1
+                elif mode == 3:
+                    self.m0.value = 1
+                    self.m1.value = 1
             self.mode = mode
-            time.sleep_ms(2)
+            #time.sleep_ms(2)
+            time.sleep(0.002)
 
     def getMode(self):
         return self.mode
 
     def reset(self):
         self.setMode(3)
-        before = self.aux.value()
+        #before = self.aux.value()
         self.serial.write( b'\XC4\XC4\XC4')
-        start = time.ticks_ms()
-        time.sleep_ms(5)
-        after = self.aux.value()
-        while self.aux.value() == 0:
-            pass
-        elapsed = time.ticks_ms() - start
+        #start = time.ticks_ms()
+        #time.sleep_ms(5)
+        time.sleep(0.005)
+        #after = self.aux.value()
+        if self.pythontype == 0:
+            while self.aux.value() == 0:
+                pass
+        else:
+            while self.aux.value == 0:
+                pass
+        #elapsed = time.ticks_ms() - start
         if self.debug:
-            print('AUX b %d a %d'%(before,after))
-            print('Reset %dms'%(elapsed))
-
+            #print('AUX b %d a %d'%(before,after))
+            #print('Reset %dms'%(elapsed))
+            pass
+        
     def serClear(self):
-        while self.serial.any():
-            self.serial.read()
+        if self.pythontype == 0:
+            while self.serial.any():
+                self.serial.read()
+        else:
+            while self.serial.in_waiting > 0:
+                self.serial.read()
+
 
     def getModule(self):
         """
@@ -149,12 +206,17 @@ class E32lora:
         self.setMode(3)
         self.serClear()
         self.serial.write( b'\xc3\xc3\xc3')
-        time.sleep_ms(10)
+        #time.sleep_ms(10)
+        time.sleep(0.010)
         d = self.serial.read()
         # print(d)
         # wait for AUX to go down
-        while self.aux.value() == 0:
-            pass
+        if self.pythontype == 0:
+            while self.aux.value() == 0:
+                pass
+        else:
+            while self.aux.value == 0:
+                pass
         data = bytes(d)
         if len(data) != 4:
             print("getModule data length wrong")
@@ -176,11 +238,19 @@ class E32lora:
         Get incoming data (if any).
         """ 
         # self.setMode(0) # should already be mode 0/1
-        if self.serial.any():
-            return self.serial.read()
+        if self.pythontype == 0:
+            if self.serial.any():
+                return self.serial.read()
+            else:
+                return None
         else:
-            return None
-
+            #print('cp',self.serial.in_waiting)
+            if self.serial.in_waiting > 0:
+                d = self.serial.read(self.serial.in_waiting)
+                return d
+            else:
+                return None
+            
     def getConfig(self):
         """
         Make a local copy of this devices configuration
@@ -189,19 +259,34 @@ class E32lora:
         self.haveconfig = False
         self.setMode(3)
         self.serClear()
-        before = self.aux.value()
+        before = -1
+        after = -1
+        if self.pythontype == 0:
+            before = self.aux.value()
+        else:
+            before = self.aux.value
+            
         self.serial.write( b'\xc1\xc1\xc1')
-        start = time.ticks_ms()
-        time.sleep_ms(5)  # why do I need this?
-        after = self.aux.value()
+        #start = time.ticks_ms()
+        #time.sleep_ms(5)  # why do I need this?
+        time.sleep(0.005)
+        if self.pythontype == 0:
+            #after = self.aux.value()
+            while self.aux.value() == 0:
+                pass
+        else:
+            #after = self.aux.value
+            while self.aux.value == 0:
+                pass
         # wait for AUX to go down
-        while self.aux.value() == 0:
-            pass
-        elapsed = time.ticks_ms() - start
+       # while self.aux.value() == 0:
+        #    pass
+        #elapsed = time.ticks_ms() - start
         d = self.serial.read()
         if self.debug:
-            print('AUX b %d a %d'%(before,after))
-            print('getConfig',d,type(d),' Elapsed time',elapsed)
+            #print('AUX b %d a %d'%(before,after))
+            #print('getConfig',d,type(d),' Elapsed time',elapsed)
+            pass
         if type(d) is bytes and len(d) == 6 and d[0] == 0xc0:
             # d is a bytes which is non-mutable, change to bytearray
             # needed for following setXXX functions           
@@ -255,11 +340,15 @@ class E32lora:
                 if self.debug:
                     print('Sending',msg,'type',type(msg))
                 if type(msg) is bytes:
-                    self.serial.write(msg,len(msg))
+                    self.serial.write(msg) #,len(msg))
                 else:
-                    self.serial.write(bytes(bytearray(msg)),len(msg))
-                while (self.aux.value() == 0):
-                    pass
+                    self.serial.write(bytes(bytearray(msg))) #,len(msg))
+                if self.pythontype == 0:
+                    while self.aux.value() == 0:
+                        pass
+                else:
+                    while self.aux.value == 0:
+                        pass
             else:
                 print('Maximum message length 58 bytes')
         else:
@@ -280,9 +369,13 @@ class E32lora:
                     ba = bytes(bytearray((addh,addl,channel))+bytearray(msg))
                 else:
                     ba = bytes(bytearray((addh,addl,channel)))+msg
-                self.serial.write(ba,len(ba))
-                while (self.aux.value() == 0):
-                    pass
+                self.serial.write(ba) #,len(ba))
+                if self.pythontype == 0:
+                    while self.aux.value() == 0:
+                        pass
+                else:
+                    while self.aux.value == 0:
+                        pass
             else:
                 print('Maximum message length 58 bytes')
         else:
@@ -403,16 +496,22 @@ class E32lora:
                 self.config[0] = 0xc0
             else:
                 self.config[0] = 0xc2
-            before = self.aux.value()
-            start = time.ticks_ms()
-            self.serial.write(self.config,6)
-            time.sleep_ms(2)
-            after = self.aux.value()
-            while self.aux.value() == 0:
-                pass
+            #before = self.aux.value()
+            #start = time.ticks_ms()
+            self.serial.write(self.config) #,6)
+            #time.sleep_ms(2)
+            time.sleep(0.002)
+            if self.pythontype == 0:
+                #after = self.aux.value()
+                while self.aux.value() == 0:
+                    pass
+            else:
+                while self.aux.value == 0:
+                    pass
             if self.debug:
-                print('AUX b %d a %d'%(before,after))
-                print('setConfig %dms'%(time.ticks_ms() - start))
-            time.sleep(1)
+                #print('AUX b %d a %d'%(before,after))
+                #print('setConfig %dms'%(time.ticks_ms() - start))
+                pass
+            #time.sleep(1)
         else:
             print('No config to save')
